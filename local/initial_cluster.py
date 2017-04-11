@@ -527,10 +527,132 @@ def gen_ref(filename):
 
 def cluster(utt_name, fout):
     #featfile = 'data/'+utt_name+'/dvector.ark'
-    vadfile = 'data/'+utt_name+'/fbank_vad.ark'
+    vadfile = '../170309_thu_ev/data/'+utt_name+'/fbank_vad.ark'
     #ref = read_ref('ref/'+utt_name+'.txt')
     #ref_f = cpt_seg('ref/'+utt_name+'.txt')
-    ref_f = gen_ref('thu_ev_tag/'+utt_name+'.txt')
+    ref_f = gen_ref('../170309_thu_ev/thu_ev_tag/'+utt_name+'.txt')
+    #print ref_f
+    f_utt = 'data/'+utt_name
+    
+    vad_utt_label, vad_content = readvadfromkaldi(vadfile)
+    vad = vad_content[0]
+    
+    feat = np.load("feat_pca/"+utt_name+".npy")
+    
+    feat_vad, feat_time = gen_feat_vad(feat, vad)
+    
+    #spk_model_gt = get_spk_model_ground_truth(ref, feat, spk_model_type)
+    
+    #print 'init_segmentation:'
+    initial_det, initial_det_index = initial_seg(feat_vad, feat_time)
+    init_e = seg_evlaution(initial_det, ref_f)
+    print init_e
+    #print initial_det
+    #print initial_det_index
+    #fout.write(utt_name+' ')
+    #fout.write(str(init_e[0])+' '+str(init_e[1])+' '+str(init_e[2])+' '+str(init_e[3])+' '+str(init_e[4])+' '+str(init_e[5])+' ')
+    
+    # for i in zip(initial_det_index, initial_det):
+    #     print i[0], i[1], feat_time[i[0]]
+    #print 'init_cluster'
+    cluster_change_point, cluster_result, spk_model = initial_cluster(initial_det_index, feat_vad, feat_time, spk_model_type)
+    #print [frame2time(feat_time[i], mfcc_shift) for i in cluster_change_point]
+    #print cluster_result
+    cluster_e = seg_evlaution([frame2time(feat_time[i], mfcc_shift) for i in cluster_change_point], ref_f)
+    print cluster_e
+
+    #cluster_e_purity = cluster_evlaution(ref, [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in cluster_result])
+    #print cluster_e_purity
+
+    #gen_rttm(utt_name, ref, [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in cluster_result])
+    
+    #fout.write(utt_name+' '+str(cluster_e[0])+' '+str(cluster_e[1])+' '+str(cluster_e[2])+' '+str(cluster_e[3])+' '+str(cluster_e[4])+' '+str(cluster_e[5])+' '+str(cluster_e_purity[0])+' '+str(cluster_e_purity[1]))
+    #fout.write(str(cluster_e[0])+' '+str(cluster_e[1])+' '+str(cluster_e[2])+' '+str(cluster_e[3])+' '+str(cluster_e[4])+' '+str(cluster_e[5]))
+    #fout.write('\n')
+
+def twospeaker_cluster(det_index, feat, feat_vad, feat_time, type, utt_name, num_segment):
+    #spk0_rep, spk1_rep = [], []
+    cluster_change_point, cluster_result = [], []
+    last_index = 0
+    block_rep, block_tag = gen_block_representation(det_index, feat_vad, feat_time)
+    #print len(block_rep)
+    #print block_tag
+
+
+    reflist = file('../170309_thu_ev/thu_ev_tag/'+utt_name+'.txt').readlines()
+    spk1 = utt_name.split('_')[0][:-3]
+    spk2 = utt_name.split('_')[1][:-3]
+    #print spk1, spk2
+    
+    spk_dict = {spk1:[],spk2:[]}
+    for i in reflist:
+        each = i.split()
+        if each[2]=='SIL' or each[2]=='OVERLAP':
+            continue
+        spk_dict[each[2]].append([time2frame(float(each[0]), mfcc_shift),time2frame(float(each[1]), mfcc_shift)])
+    spk1_data, spk2_data = [], []
+    '''
+    for i in spk_dict[spk1][:num_segment]:
+        spk1_data += feat[i[0]:i[1]].tolist()
+    for i in spk_dict[spk2][:num_segment]:
+        spk2_data += feat[i[0]:i[1]].tolist()
+    '''
+    for i in spk_dict[spk1]:
+        spk1_data += feat[i[0]:i[1]].tolist()
+    for i in spk_dict[spk2]:
+        spk2_data += feat[i[0]:i[1]].tolist()
+    spk0_rep = np.array(spk1_data)
+    spk1_rep = np.array(spk2_data)
+    
+    '''    
+    y_pred = KMeans(n_clusters=2).fit_predict(block_rep)
+    for i, k in enumerate(y_pred):
+        if k==0:
+            for j in range(block_tag[i][0], block_tag[i][1]):
+                spk0_rep.append(feat_vad[j])
+        else:
+            for j in range(block_tag[i][0], block_tag[i][1]):
+                spk1_rep.append(feat_vad[j])
+        if i==0:
+            continue
+        if k!=y_pred[i-1]:
+            cluster_change_point.append(block_tag[i][0])
+            cluster_result.append([[last_index, block_tag[i][0]], k])
+            last_index = block_tag[i][0]
+    '''
+    
+    if type=='mean': 
+        spk0_model = np.mean(spk0_rep, axis=0)
+        spk1_model = np.mean(spk1_rep, axis=0)
+        y_pred = []
+        for i in block_rep:
+            cos_0 = np.dot(i,spk0_model)/(np.linalg.norm(i)*np.linalg.norm(spk0_model))
+            cos_1 = np.dot(i,spk1_model)/(np.linalg.norm(i)*np.linalg.norm(spk1_model))
+            if cos_0 < cos_1:
+                y_pred.append(0)
+            else:
+                y_pred.append(1)
+        for i, k in enumerate(y_pred):
+            if i==0:
+                continue
+            if k!=y_pred[i-1]:
+                cluster_change_point.append(block_tag[i][0])
+                cluster_result.append([[last_index, block_tag[i][0]], k])
+                last_index = block_tag[i][0]
+        return cluster_change_point, cluster_result, [spk0_model, spk1_model]
+    else:
+        #clf = svm.SVC()
+        #clf.fit(block_rep, y_pred)
+        #return cluster_change_point, cluster_result, clf
+        pass
+
+
+def get_two_cluster(utt_name, fout):
+    #featfile = 'data/'+utt_name+'/dvector.ark'
+    vadfile = '../170309_thu_ev/data/'+utt_name+'/fbank_vad.ark'
+    #ref = read_ref('ref/'+utt_name+'.txt')
+    #ref_f = cpt_seg('ref/'+utt_name+'.txt')
+    ref_f = gen_ref('../170309_thu_ev/thu_ev_tag/'+utt_name+'.txt')
     #print ref_f
     f_utt = 'data/'+utt_name
     
@@ -555,7 +677,8 @@ def cluster(utt_name, fout):
     # for i in zip(initial_det_index, initial_det):
     #     print i[0], i[1], feat_time[i[0]]
     #print 'init_cluster'
-    cluster_change_point, cluster_result, spk_model = initial_cluster(initial_det_index, feat_vad, feat_time, spk_model_type)
+    cluster_change_point, cluster_result, spk_model = twospeaker_cluster(initial_det_index, feat, feat_vad, feat_time, spk_model_type, utt_name, 5)
+    #cluster_change_point, cluster_result, spk_model = initial_cluster(initial_det_index, feat_vad, feat_time, spk_model_type)
     #print [frame2time(feat_time[i], mfcc_shift) for i in cluster_change_point]
     #print cluster_result
     cluster_e = seg_evlaution([frame2time(feat_time[i], mfcc_shift) for i in cluster_change_point], ref_f)
@@ -570,14 +693,17 @@ def cluster(utt_name, fout):
     fout.write(str(cluster_e[0])+' '+str(cluster_e[1])+' '+str(cluster_e[2])+' '+str(cluster_e[3])+' '+str(cluster_e[4])+' '+str(cluster_e[5]))
     fout.write('\n')
 
-#cluster('F001HJN_F002VAN_001','')
 
-fout = file('results_p/init_seg.out', 'w')
+#cluster('F001HJN_F002VAN_001','')
+#get_two_cluster('F001HJN_F002VAN_001','')
+
+
+fout = file('known_twospeaker_seg.out', 'w')
 flist =  file('lst/thu_ev.lst').readlines()
 for i in flist:
     each = i[:-1].split(' ')[0]
     print each
-    cluster(each, fout)
+    get_two_cluster(each, fout)
 
 
 
