@@ -53,5 +53,55 @@ The distribution of the two error rate in the dataset
 ![distribution2](result/know_2_seg/know2spk_all_2.png)
 
 
+## Design of software
 
+### feature extraction: d-vector (with kaldi toolkit)
+
+input: wavfile, nnet, wavlist
+
+output: d-vector feature files (with pca feature dimensionality reduction)
+
+### bic, glr, kl2 segmentation
+
+input: mfcc sequences (numpy array), window_size, window_shift
+
+output: score curves, initial segmentation blocks(start_time, end_time)
+
+### d-vector segmentation
+
+input: d-vector sequences (numpy array), window_size, window_shift
+
+output: score curves, initial segmentation blocks(start_time, end_time)
+
+### generate segmentation blocks with fixed_threshold
+
+input: score curves (bic, glr, kl2, d-vector)
+
+output: new segmentation blocks
+
+### blind resegmentation k-means clustering (default k=2)
+
+input: initial segmentation blocks
+
+output: new segmentation blocks, speaker tag
+
+### resegmentation with speaker models
+
+input: initial segmentation blocks, speaker models
+
+output: new segmentation blocks, speaker tag
+
+### evalution
+
+FAR, MDR: segmentation blocks, ref file, tolerance
+
+DET curves with sliding threshold: d-vector score curves(list), ref file(list)
+
+ASP, ACP: segmentation blocks, speaker tag, ref file(with speaker tag)
+
+speaker1_false_rate, speaker1_miss_rate, speaker2_false_rate, speaker2_miss_rate: segmentation blocks, speaker tag, ref file(with speaker tag). - divided by speaker1 and speaker2
+
+
+### warning:
+- single converation segmentation and list segmentation configuration, especially in sliding threshold evluation
 
