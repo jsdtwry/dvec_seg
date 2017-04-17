@@ -1,6 +1,6 @@
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
+#from mpl_toolkits.mplot3d import Axes3D
+#import matplotlib.pyplot as plt
 
 def cal():
     f = file('init_seg.out').readlines()
@@ -76,5 +76,43 @@ def plot3dhist():
 
     plt.show()
 
+# cal means with F-F, M-F, M-M
+def cal_1():
+    #f = file('init_seg.out').readlines()
+    f = file('../know_2_seg/know_twospeaker_seg.out').readlines()
+
+    f_f, m_f, m_m = [], [], []
+    for i in f:
+        temp = []
+        each = i[:-1].split()
+        for j in each[1:]:
+            temp.append(float(j))
+        uu = each[0].split('_')
+        if uu[0][0]=='F' and uu[1][0]=='F':
+            f_f.append(temp)
+        elif uu[0][0]=='M' and uu[1][0]=='M':
+            m_m.append(temp)
+        else:
+            m_f.append(temp)
+
+    re1 = np.mean(f_f, axis=0)
+    re2 = np.mean(m_m, axis=0)
+    re3 = np.mean(m_f, axis=0)
+    #re = np.sum(content, axis=0)
+    print len(f_f),
+    for i in re1:
+        print i,
+    print
+    print len(m_m),
+    for i in re2:
+        print i,
+    print
+    print len(m_f),
+    for i in re3:
+        print i,
+    print
+
+cal_1()
+
 #test()
-plot3dhist()
+#plot3dhist()

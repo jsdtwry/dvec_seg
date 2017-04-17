@@ -8,7 +8,7 @@ Tolerance: 0.3 seconds
 
 ### Sliding threshold:
 FAR and MDR evolution of three tolerances:
-![FAR and MDR](result/thres_seg/FAR_and_MDR.png)
+![FAR and MDR](result/thres_seg_2/FAR_AND_MDR.png)
 
 
 ### local minimum detection:
@@ -29,6 +29,34 @@ FAR and MDR evolution of three tolerances:
 The distribution of the two error rate in the dataset
 ![distribution1](result/kmeans_cluster/FAR_side.png)
 ![distribution2](result/kmeans_cluster/MDR_side.png)
+
+#### F-F
+- test case: 487
+- real change point: 15,303
+- detected points: 230,81
+- false alarm: 12,515
+- miss detection: 5,493
+- FAR: 40.25%
+- MDR: 35.88%
+
+#### M-M
+- test case: 168
+- real change point: 5,134
+- detected points: 6,258
+- false alarm: 3,389
+- miss detection: 2,290
+- FAR: 34.86%
+- MDR: 44.55%
+
+#### M-F
+- test case: 406
+- real change point: 12,555
+- detected points: 12,809
+- false alarm: 3,564
+- miss detection: 33,94
+- FAR: 19.79%
+- MDR: 27.30%
+
 
 ### known two speakers -5 segments to train model:
 - detected points: 40,849
@@ -52,6 +80,32 @@ The distribution of the two error rate in the dataset
 ![distribution1](result/know_2_seg/know2spk_all_1.png)
 ![distribution2](result/know_2_seg/know2spk_all_2.png)
 
+#### F-F
+- test case: 494
+- real change point: 15,506
+- detected points: 200,73
+- false alarm: 8,234
+- miss detection: 4,065
+- FAR: 32.47%
+- MDR: 26.17%
+
+#### M-M
+- test case: 168
+- real change point: 5,134
+- detected points: 6,131
+- false alarm: 3,097
+- miss detection: 2,145
+- FAR: 35.21%
+- MDR: 41.78%
+
+#### M-F
+- test case: 399
+- real change point: 12,332
+- detected points: 12,807
+- false alarm: 3,657
+- miss detection: 3,263
+- FAR: 20.65%
+- MDR: 26.72%
 
 ## Design of software
 
