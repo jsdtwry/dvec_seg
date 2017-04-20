@@ -45,7 +45,9 @@ def spk_k_means_cluster(det_index, feat_vad, feat_time, type):
         clf.fit(block_rep, y_pred)
         return cluster_change_point, cluster_result, clf
 
-
+'''
+generate dvector speaker models
+'''
 def get_spk_model(feat, utt_name):
     reflist = file('thu_ev_tag/'+utt_name+'.txt').readlines()
     spk1 = utt_name.split('_')[0][:-3]
@@ -71,7 +73,9 @@ def get_spk_model(feat, utt_name):
     return spk0_model, spk1_model
     
  
-
+'''
+speaker clustering and combination with given speaker models
+'''
 def spk_reseg_with_models(det_index, feat_vad, feat_time, spk_model):
     cluster_change_point, cluster_result = [], []
     spk0_model, spk1_model = spk_model
@@ -93,37 +97,5 @@ def spk_reseg_with_models(det_index, feat_vad, feat_time, spk_model):
             cluster_result.append([[last_index, block_tag[i][0]], k])
             last_index = block_tag[i][0]
     return cluster_change_point, cluster_result
-
-
-'''
-#scores, times, det_time, det_index = initial_segmentation('data/F001HJN_F002VAN_001/mfcc_feats.ark', 'data/F001HJN_F002VAN_001/fbank_vad.ark', 20, 1, 0.1, 'bic')
-
-mfcc_file = 'data/F001HJN_F002VAN_001/mfcc_feats.ark' # 20 dim
-dvector_file = 'data/F001HJN_F002VAN_001/dvector.ark' # 400 dim
-vad_file = 'data/F001HJN_F002VAN_001/fbank_vad.ark'
-
-utt_lable, content = readfeatfromkaldi(mfcc_file, 20)
-print utt_lable
-print len(content)
-print content[0]
-
-vad_utt_label, vad_content = readvadfromkaldi(vad_file)
-
-print vad_utt_label
-print len(vad_content)
-print vad_content[0]
-
-feat_vad, feat_time = gen_feat_vad(content,  vad_content)
-#scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 0.1, 0.01, 'dvec')
-scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 1, 0.1, 'bic', lamda=1.0)
-
-change_point, segment_result, spk_model = spk_k_means_cluster(det_index, feat_vad, feat_time, 'svm')
-print len(change_point), len(segment_result), spk_model
-# print change_point
-# print segment_result
-print [frame2time(feat_time[i], mfcc_shift) for i in change_point]
-print [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
-'''
-
 
 

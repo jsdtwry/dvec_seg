@@ -30,6 +30,9 @@ def inpoint(seg, det, ft):
             return True
     return False
 
+'''
+generate reference of change segments
+'''
 def gen_ref_seg(filename):
     utt_c = []
     ref = []
@@ -48,6 +51,9 @@ def gen_ref_seg(filename):
             ref.append([float(utt_c[index-1][1]), float(utt_c[index-1][1])])
     return ref
 
+'''
+generate reference speaker labels
+'''
 def read_ref(filename):
     utt_c = []
     ref = []
@@ -69,6 +75,7 @@ def read_ref(filename):
             else:
                 ref.append([[float(i[0]),float(i[1])], 0])
     return ref
+
 '''
 Given detected change points, reference change segments and the torlance to calculate FAR, MDR, RCL, RRL
 '''
@@ -97,55 +104,8 @@ def seg_evlaution(det_tmp, ref_f, ft):
     return total, len(det), false_alarm, miss_det, FAR, MDR, RCL, RRL
 
 '''
-generate det curves with all files in the list
+Given clustering result and reference speaker labels to calculate the ACP, ASP
 '''
-def detlist_eer(lst_filename, seg_type, ft):
-    full_scores, scores_c, times_c, ref_c = [], [], [], []
-    eer_x, eer_y, eer_t = [], [], []
-    for i in file(lst_filename).readlines():
-        utt = i.split()[0]
-        scores, times, det_time, det_index = initial_seg.initial_segmentation('../170309_thu_ev/data/'+utt+'/dvector.ark', '../170309_thu_ev/data/'+utt+'/fbank_vad.ark', 400, 0.1, 0.01, seg_type)
-        ref_segment = gen_ref_seg('../170309_thu_ev/thu_ev_tag/'+utt+'.txt')
-        scores_c.append(scores)
-        times_c.append(times)
-        ref_c.append(ref_segment)
-        full_scores.extend(scores)
-    thr = np.linspace(min(full_scores), max(full_scores), 100)
-    for T in thr:
-        false_alarm, miss_det, total = 0, 0, 0
-        for index, scores in enumerate(scores_c):
-            if seg_type=='dvec':
-                det_tmp = fix_slid_det_dvec(times_c[index], scores, float(T))
-            else:
-                det_tmp = fix_slid_det_bic(times_c[index], scores, float(T))
-            det = []
-            for i in det_tmp:
-                if i > ref_c[index][0][0] and i < ref_c[index][-1][-1]:
-                    det.append(i)
-            for i in det:
-                if not inline(float(i), ref_c[index], ft):
-                    false_alarm += 1
-            for i in ref_c[index]:
-                if not inpoint(i, det, ft):
-                    miss_det += 1
-
-            total += len(ref_c[index])
-        FAR = float(false_alarm)/(total+false_alarm)
-        MDR = float(miss_det)/total
-        print T,
-        print FAR,
-        print MDR
-		#print false_alarm, miss_det, total
-        eer_x.append(FAR)
-        eer_y.append(MDR)
-        eer_t.append(T)
-    dist = []
-    for index, each in enumerate(eer_x):
-        dist.append(abs(each - eer_y[index]))
-    ii = dist.index(min(dist))
-    print seg_type, '======================='
-    print eer_x[ii], eer_y[ii], eer_t[ii]
-
 def cluster_evluation(ref, cluster):
     point_recog_0 = 0.0
     point_recog_0_ref_0 = 0.0
@@ -183,16 +143,4 @@ def cluster_evluation(ref, cluster):
     asp = s_0*(point_recog_0_ref_0+point_recog_1_ref_0)+s_1*(point_recog_0_ref_1+point_recog_1_ref_1)
     asp_r = asp/(point_recog_0_ref_0+point_recog_0_ref_1+point_recog_1_ref_0+point_recog_1_ref_1)
     return acp_r, asp_r
-
-
-'''
-ref_segment = gen_ref_seg('../170309_thu_ev/thu_ev_tag/F001HJN_F002VAN_001.txt')
-scores, times, det_time, det_index = initial_seg.initial_segmentation('data/F001HJN_F002VAN_001/mfcc_feats.ark', 'data/F001HJN_F002VAN_001/fbank_vad.ark', 20, 1, 0.1, 'bic')
-
-#init_e = seg_evlaution(det_time, ref_segment, 0.3)
-print init_e
-'''
-
-# detlist_eer('lst/thu_ev.lst', 'bic', 0.3)
-
 

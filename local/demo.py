@@ -1,6 +1,24 @@
 from spk_cluster_reseg import *
 from evaluation import *
 from initial_seg import *
+import sys
+import os
+
+def pre_processing():
+    uttlst = file('lst/t2.lst').readlines()
+    for i in uttlst:
+        each = i[:-1].split()
+        os.makedirs('data/'+each[0])
+        fout = file('data/'+each[0]+'/wav.scp','w')
+        fout.write(i)
+
+def feat_extraction():
+    uttlst = file('lst/t2.lst').readlines()
+    for i in uttlst:
+        each = i[:-1].split()
+        os.system('bash fea_extract.sh data/'+each[0])
+    print 'pre-processing and feature extraction done!'
+    
 
 def dvec_demo():
     dvector_file = 'data/F001HJN_F002VAN_001/dvector.ark' # 400 dim
@@ -30,8 +48,23 @@ def dvec_demo():
     # evlaution
     init_e = seg_evlaution(det_time, ref_segment, 0.3)
     cluster_e = cluster_evluation(ref, cluster_result)
+    print 'K-means clustering:'
     print init_e
     print cluster_e
+    
+    # resegmentation with speaker models
+    spk_model = get_spk_model(feat_content, 'F001HJN_F002VAN_001')
+    change_point, segment_result = spk_reseg_with_models(det_index, feat_vad, feat_time, spk_model)
+    det_time = [frame2time(feat_time[i], mfcc_shift) for i in change_point]
+    cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
+
+    # evlaution
+    init_e = seg_evlaution(det_time, ref_segment, 0.3)
+    cluster_e = cluster_evluation(ref, cluster_result)
+    print 'resegmentation with speaker models:'
+    print init_e
+    print cluster_e
+ 
 
 def bic_change_det():
     mfcc_file = 'data/F001HJN_F002VAN_001/mfcc_feats.ark' # 20 dim
@@ -101,4 +134,10 @@ def det_eer(lst_filename, seg_type, ft):
     ii = dist.index(min(dist))
     print eer_x[ii], eer_y[ii], eer_t[ii]
 
+
+#pre_processing()
+#feat_extraction()
+
 det_eer('lst/t2.lst', 'bic', 0.3)
+bic_change_det()
+dvec_demo()

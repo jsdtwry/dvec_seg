@@ -118,6 +118,7 @@ def glr(left, right, full):
     return glr
 
 '''
+local maximum and local minimum detection
 '''
 def fix_slid_det_dvec_nothreshold(times, times_index, scores):
     det, det_index = [], []
@@ -197,37 +198,4 @@ def initial_segmentation(feat_filename, vad_filename, feat_dim, win_size, win_sh
     vad_utt_label, vad_content = readvadfromkaldi(vad_filename)
     feat_vad, feat_time = gen_feat_vad(content, vad_content)
     return initial_seg(feat_vad, feat_time, win_size, win_shift, seg_type)
-'''
-mfcc_file = 'data/F001HJN_F002VAN_001/mfcc_feats.ark' # 20 dim
-dvector_file = 'data/F001HJN_F002VAN_001/dvector.ark' # 400 dim
-vad_file = 'data/F001HJN_F002VAN_001/fbank_vad.ark'
-
-utt_lable, content = readfeatfromkaldi(mfcc_file, 20)
-print utt_lable
-print len(content)
-print content[0]
-
-vad_utt_label, vad_content = readvadfromkaldi(vad_file)
-
-print vad_utt_label
-print len(vad_content)
-print vad_content[0]
-
-feat_vad, feat_time = gen_feat_vad(content,  vad_content)
-scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 0.1, 0.01, 'dvec')
-scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 1, 0.1, 'bic', lamda=1.0)
-
-print len(scores), len(times), len(det_time), len(det_index)
-print det_time
-print det_index
-print times
-#initial_seg(feat_vad, feat_time, 1, 0.1, 'glr')
-#initial_seg(feat_vad, feat_time, 1, 0.1, 'kl')
-
-scores, times, det_time, det_index = initial_segmentation('data/F001HJN_F002VAN_001/mfcc_feats.ark', 'data/F001HJN_F002VAN_001/fbank_vad.ark', 20, 1, 0.1, 'bic')
-print len(scores), len(times), len(det_time), len(det_index)
-'''
-
-
-
 
