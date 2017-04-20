@@ -19,8 +19,8 @@ vad_utt_label, vad_content = readvadfromkaldi(vad_file)
 #print len(vad_content)
 #print vad_content[0]
 
-ref_segment = gen_ref_seg('../170309_thu_ev/thu_ev_tag/F001HJN_F002VAN_001.txt')
-ref = read_ref('../170309_thu_ev/thu_ev_tag/F001HJN_F002VAN_001.txt')
+ref_segment = gen_ref_seg('thu_ev_tag/F001HJN_F002VAN_001.txt')
+ref = read_ref('thu_ev_tag/F001HJN_F002VAN_001.txt')
 
 # initial segmentation
 feat_vad, feat_time = gen_feat_vad(feat_content, vad_content)

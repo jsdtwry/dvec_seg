@@ -30,30 +30,6 @@ def inpoint(seg, det, ft):
             return True
     return False
 
-'''
-segmentation with fixed threshold - bic
-'''
-def fix_slid_det_bic(times, scores, threshold):
-        det = []
-        for index, each in enumerate(scores):
-                if index == 0 or index == len(scores)-1:
-                        continue
-                if each > scores[index-1] and each > scores[index+1] and each > threshold:
-                        det.append(times[index])
-        return det
-
-'''
-segmentation with fixed threshold - d-vector
-'''
-def fix_slid_det_dvec(times, scores, threshold):
-        det = []
-        for index, each in enumerate(scores):
-                if index == 0 or index == len(scores)-1:
-                        continue
-                if each < scores[index-1] and each < scores[index+1] and each < threshold:
-                        det.append(times[index])
-        return det
-
 def gen_ref_seg(filename):
     utt_c = []
     ref = []

@@ -139,6 +139,29 @@ def fix_slid_det_bic_nothreshold(times, times_index, scores):
                     det_index.append(times_index[index])
     return det, det_index
 
+'''
+segmentation with fixed threshold - bic
+'''
+def fix_slid_det_bic(times, scores, threshold):
+        det = []
+        for index, each in enumerate(scores):
+                if index == 0 or index == len(scores)-1:
+                        continue
+                if each > scores[index-1] and each > scores[index+1] and each > threshold:
+                        det.append(times[index])
+        return det
+
+'''
+segmentation with fixed threshold - d-vector
+'''
+def fix_slid_det_dvec(times, scores, threshold):
+        det = []
+        for index, each in enumerate(scores):
+                if index == 0 or index == len(scores)-1:
+                        continue
+                if each < scores[index-1] and each < scores[index+1] and each < threshold:
+                        det.append(times[index])
+        return det
 
 '''Init segmentation with no threshold return the list of change point and change point reaf'''
 '''[1.92, 2.16, 2.65, 2.78, 2.88, 3.14]'''

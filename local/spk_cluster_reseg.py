@@ -47,7 +47,7 @@ def spk_k_means_cluster(det_index, feat_vad, feat_time, type):
 
 
 def get_spk_model(feat, utt_name):
-    reflist = file('../170309_thu_ev/thu_ev_tag/'+utt_name+'.txt').readlines()
+    reflist = file('thu_ev_tag/'+utt_name+'.txt').readlines()
     spk1 = utt_name.split('_')[0][:-3]
     spk2 = utt_name.split('_')[1][:-3]
     #print spk1, spk2
