@@ -133,13 +133,25 @@ def cluster_evluation(ref, cluster):
                 point_recog_1_ref_1+=1
             else:
                 continue
-    p_0 = (point_recog_0_ref_0/point_recog_0)**2+(point_recog_0_ref_1/point_recog_0)**2
-    p_1 = (point_recog_1_ref_0/point_recog_1)**2+(point_recog_1_ref_1/point_recog_1)**2
+    if point_recog_0==0:
+        p_0 = 0 
+    else:
+        p_0 = (point_recog_0_ref_0/point_recog_0)**2+(point_recog_0_ref_1/point_recog_0)**2
+    if point_recog_1==0:
+        p_1 = 0 
+    else:
+        p_1 = (point_recog_1_ref_0/point_recog_1)**2+(point_recog_1_ref_1/point_recog_1)**2
     acp = p_0*point_recog_0+p_1*point_recog_1
     acp_r = acp/(point_recog_0_ref_0+point_recog_0_ref_1+point_recog_1_ref_0+point_recog_1_ref_1)
-
-    s_0 = (point_recog_0_ref_0/(point_recog_0_ref_0+point_recog_1_ref_0))**2+(point_recog_1_ref_0/(point_recog_0_ref_0+point_recog_1_ref_0))**2
-    s_1 = (point_recog_0_ref_1/(point_recog_0_ref_1+point_recog_1_ref_1))**2+(point_recog_1_ref_1/(point_recog_0_ref_1+point_recog_1_ref_1))**2
+    
+    if point_recog_0_ref_0+point_recog_1_ref_0==0:
+        s_0 = 0 
+    else:
+        s_0 = (point_recog_0_ref_0/(point_recog_0_ref_0+point_recog_1_ref_0))**2+(point_recog_1_ref_0/(point_recog_0_ref_0+point_recog_1_ref_0))**2
+    if point_recog_0_ref_1+point_recog_1_ref_1==0:
+        s_1 = 0 
+    else:
+        s_1 = (point_recog_0_ref_1/(point_recog_0_ref_1+point_recog_1_ref_1))**2+(point_recog_1_ref_1/(point_recog_0_ref_1+point_recog_1_ref_1))**2
     asp = s_0*(point_recog_0_ref_0+point_recog_1_ref_0)+s_1*(point_recog_0_ref_1+point_recog_1_ref_1)
     asp_r = asp/(point_recog_0_ref_0+point_recog_0_ref_1+point_recog_1_ref_0+point_recog_1_ref_1)
     return acp_r, asp_r
