@@ -2,6 +2,46 @@ from spk_cluster_reseg import *
 from evaluation import *
 from initial_seg import *
 
+def test_all(lst_filename):
+    for i in file(lst_filename).readlines():
+        utt = i.split()[0]
+        mfcc_file = 'data/'+utt+'/mfcc_feats.ark' # 20 dim
+        dvector_file = 'data/'+utt+'/dvector.ark' # 400 dim
+        mfcc_vad = 'data/'+utt+'/mfcc_vad.ark'
+        fbank_vad = 'data/'+utt+'/fbank_vad.ark'
+        utt_lable, feat_content = readfeatfromkaldi(dvector_file, 400)
+        vad_utt_label, vad_content = readvadfromkaldi(fbank_vad)
+        ref_segment = gen_ref_seg('thu_ev_tag/'+utt+'.txt')
+        ref = read_ref('thu_ev_tag/'+utt+'.txt')
+        feat_vad, feat_time = gen_feat_vad(feat_content, vad_content)
+        scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 0.1, 0.01, 'dvec')
+        
+        # k-means
+        change_point, segment_result, spk_model = spk_k_means_cluster(det_index, feat_vad, feat_time, 'svm')
+        det_time = [frame2time(feat_time[i], mfcc_shift) for i in change_point]
+        cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
+
+        init_e = seg_evlaution(det_time, ref_segment, 0.3)
+        print init_e[4], init_e[5],
+
+        cluster_e = cluster_evluation(ref, cluster_result)
+        print cluster_e[0], cluster_e[1],
+
+
+        # resegmentation with speaker models
+        spk_model = get_spk_model(feat_content, utt)
+        change_point, segment_result = spk_reseg_with_models(det_index, feat_vad, feat_time, spk_model)
+        det_time = [frame2time(feat_time[i], mfcc_shift) for i in change_point]
+        cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
+
+        init_e = seg_evlaution(det_time, ref_segment, 0.3)
+        print init_e[4], init_e[5],
+
+        cluster_e = cluster_evluation(ref, cluster_result)
+        print cluster_e[0], cluster_e[1]
+
+test_all('lst/t2.lst')
+'''
 #scores, times, det_time, det_index = initial_segmentation('data/F001HJN_F002VAN_001/mfcc_feats.ark', 'data/F001HJN_F002VAN_001/fbank_vad.ark', 20, 1, 0.1, 'bic')
 
 mfcc_file = 'data/F001HJN_F002VAN_001/mfcc_feats.ark' # 20 dim
@@ -56,7 +96,7 @@ print init_e
 
 cluster_e = cluster_evluation(ref, cluster_result)
 print cluster_e
-
+'''
 '''
 detlist_eer('lst/thu_ev.lst', 'dvec', 0.3)
 detlist_eer('lst/thu_ev.lst', 'dvec', 0.2)

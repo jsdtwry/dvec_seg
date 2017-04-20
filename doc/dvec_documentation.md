@@ -1,7 +1,7 @@
 # Dvec_seg documentation
 ## 前言
 
-Dvec_seg 是一个基于深度神经网络的说话人分割工具。该工具使用python编写、运行和测试。工具利用深度神经网络提取说话人区分性特征，并采用滑动窗检测的方法进行说话人分割。同时工具也提供基于距离度量的说话人分割实现，如传统的基于bic、glr、kl2的分割方法实现。使用本工具依赖Kaldi语音识别工具箱进行语音信号的特征提取，深度神经网络的训练和深度说话人向量的提取，此外还使用scikit-learn机器学习工具包。
+Dvec_seg 是一个基于深度神经网络的说话人分割工具。该工具使用python编写、运行和测试。工具利用深度神经网络提取说话人区分性特征，并采用滑动窗检测的方法进行说话人分割。同时工具也提供基于距离度量的说话人分割实现，如传统的基于bic、glr、kl2的分割方法实现。使用本工具依赖Kaldi语音识别工具箱进行语音信号的特征提取，深度神经网络的训练和深度说话人向量的提取，此外还使用scikit-learn机器学习工具包。详细过程参见文献[1]。
 
 ## 主要模块介绍
 
@@ -11,7 +11,7 @@ Dvec_seg 是一个基于深度神经网络的说话人分割工具。该工具�
 
 ### 深度神经网络训练部分
 
-详细部分参考 deep speaker vector 网络的训练
+详细部分参考 deep speaker vector 网络的训练[2]。
 
 ### 初始分割部分
 
@@ -146,7 +146,7 @@ ACP, ASP = cluster_evluation(ref, cluster_result)
 
 ## 使用案例
 
-### 特征提取
+### 语音特征提取
 ```bash
 # fea_extract.sh
 data=$1
@@ -157,73 +157,36 @@ compute-vad --config=conf/vad.conf scp:$data/fbank_feats.scp ark,t,scp:$data/fba
 nnet3-compute --use-gpu=no nnet/final.last_hid.raw ark:$data/fbank_feats.ark ark,t,scp:$data/dvector.ark,$data/dvector.scp
 ```
 
-### d-vector 说话人分割聚类
-```python
-from spk_cluster_reseg import *     
-from evaluation import *     
-from initial_seg import *     
-         
-dvector_file = 'data/F001HJN_F002VAN_001/dvector.ark' # 400 dim
-vad_file = 'data/F001HJN_F002VAN_001/fbank_vad.ark'
+### THU_EV_1062 双人对话语音数据库分割（变换点检测）
 
-# load d-vector feature and vad result
-utt_lable, feat_content = readfeatfromkaldi(dvector_file, 40) 
-vad_utt_label, vad_content = readvadfromkaldi(vad_file)
+- 按照kaldi语音工具箱格式准备lst文件列表如下
+```
+# lst/thu_ev.lst
+# 文件名 文件语音路径
+F060HNA_F059NVA_002 /nfs/user/wangrenyu/data/thu_ev_xmx_1/thu_ev_wav/F060HNA_F059NVA_002.wav
+F057KPN_F058VAN_005 /nfs/user/wangrenyu/data/thu_ev_xmx_1/thu_ev_wav/F057KPN_F058VAN_005.wav
+F033PKN_F032ANH_005 /nfs/user/wangrenyu/data/thu_ev_xmx_1/thu_ev_wav/F033PKN_F032ANH_005.wav
+F029HJN_M016VAN_001 /nfs/user/wangrenyu/data/thu_ev_xmx_1/thu_ev_wav/F029HJN_M016VAN_001.wav
+F047JHN_F046VAN_001 /nfs/user/wangrenyu/data/thu_ev_xmx_1/thu_ev_wav/F047JHN_F046VAN_001.wav
+F049JNV_F048ANV_004 /nfs/user/wangrenyu/data/thu_ev_xmx_1/thu_ev_wav/F049JNV_F048ANV_004.wav
+M003NJH_F009VNH_001 /nfs/user/wangrenyu/data/thu_ev_xmx_1/thu_ev_wav/M003NJH_F009VNH_001.wav
 
-# remove silence regions
-feat_vad, feat_time = gen_feat_vad(feat_content, vad_content)
-
-# initial segmentation
-scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 0.1, 0.01, 'dvec')
-
-# k-means clustering from initial segmentation
-change_point, segment_result, spk_model = spk_k_means_cluster(det_index, feat_vad, feat_time, 'svm')
-
-# transform index of features to time points
-det_time = [frame2time(feat_time[i], mfcc_shift) for i in change_point]
-cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
-
-# load change points labels and speaker labels
-ref_segment = gen_ref_seg('thu_ev_tag/F001HJN_F002VAN_001.txt')
-ref = read_ref('thu_ev_tag/F001HJN_F002VAN_001.txt')
-
-# evlaution
-init_e = seg_evlaution(det_time, ref_segment, 0.3)
-cluster_e = cluster_evluation(ref, cluster_result)
-print init_e
-print cluster_e 
 ```
 
-### BIC 变换点检测
+- 执行 local/demo.py 中的 pre_processing() 和 feat_extraction() 两个函数进行文件预处理和特征提取
+
 ```python
-from spk_cluster_reseg import *     
-from evaluation import *     
-from initial_seg import *     
-
-mfcc_file = 'data/F001HJN_F002VAN_001/mfcc_feats.ark' # 20 dim
-vad_file = 'data/F001HJN_F002VAN_001/mfcc_vad.ark'
-
-# load MFCC feature and vad result
-utt_lable, feat_content = readfeatfromkaldi(mfcc_file, 20)
-vad_utt_label, vad_content = readvadfromkaldi(vad_file)
-
-# remove silence regions
-feat_vad, feat_time = gen_feat_vad(feat_content, vad_content)
-
-# initial segmentation
-scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 1, 0.1, 'bic', lamda=1.0)
-print times
-
-# fixed threshold segmentation
-det_tmp = fix_slid_det_bic(times, scores, 0)
-print det_tmp
+pre_processing()
+feat_extraction()
 ```
 
-### 生成det曲线
+- 滑动阈值，生成det曲线所必要的一些列点，并得到等错误率下的阈值取值，为了进行对比，对bic和d-vector两种分割方法在不同的错误容忍度下的性能进行的测试
+
+
 ```python
-from spk_cluster_reseg import *     
-from evaluation import *     
-from initial_seg import *  
+from spk_cluster_reseg import *
+from evaluation import *
+from initial_seg import *
 
 def det_eer(lst_filename, seg_type, ft):
     full_scores, scores_c, times_c, ref_c = [], [], [], []
@@ -274,6 +237,114 @@ def det_eer(lst_filename, seg_type, ft):
     ii = dist.index(min(dist))
     print eer_x[ii], eer_y[ii], eer_t[ii]
 
-det_eer('lst/t2.lst', 'bic', 0.3)
-det_eer('lst/t2.lst', 'dvec', 0.3)
+det_eer('lst/thu_ev.lst', 'bic', 0.3)
+det_eer('lst/thu_ev.lst', 'bic', 0.2)
+det_eer('lst/thu_ev.lst', 'bic', 0.1)
+det_eer('lst/thu_ev.lst', 'dvec', 0.3)
+det_eer('lst/thu_ev.lst', 'dvec', 0.2)
+det_eer('lst/thu_ev.lst', 'dvec', 0.1)
 ```
+- 利用可视化工具展现对比实验结果
+
+### BIC 变换点检测
+
+- 基于BIC距离度量的变换点检测，并采用固定阈值的方法进行一定置信度的分割，阈值的选择可根据环境经验选择
+
+```python
+from spk_cluster_reseg import *
+from evaluation import *
+from initial_seg import *
+
+mfcc_file = 'data/F001HJN_F002VAN_001/mfcc_feats.ark' # 20 dim
+vad_file = 'data/F001HJN_F002VAN_001/mfcc_vad.ark'
+
+# load MFCC feature and vad result
+utt_lable, feat_content = readfeatfromkaldi(mfcc_file, 20)
+vad_utt_label, vad_content = readvadfromkaldi(vad_file)
+
+# remove silence regions
+feat_vad, feat_time = gen_feat_vad(feat_content, vad_content)
+
+# initial segmentation
+scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 1, 0.1, 'bic', lamda=1.0)
+print times
+
+# fixed threshold segmentation
+det_tmp = fix_slid_det_bic(times, scores, 0)
+print det_tmp
+```
+
+### d-vector 说话人分割聚类
+
+- 基于d-vector的说话人分割距离，首先采用滑动窗检测的方法，根据两窗直接的d-vector距离计算变换点似然度，然后在似然度大的位置进行分割;对分割后生成的小段进行无监督的聚类，进而合并小段得到语音的说话人标签信息;此外实验还测试了根据已知的说话人模型信息对小段进行合并重分割的结果，实验结果明显由于前者，实验过程如下：
+
+```python
+from spk_cluster_reseg import *
+from evaluation import *
+from initial_seg import *
+
+dvector_file = 'data/F001HJN_F002VAN_001/dvector.ark' # 400 dim
+vad_file = 'data/F001HJN_F002VAN_001/fbank_vad.ark'
+
+# load d-vector feature and vad result
+utt_lable, feat_content = readfeatfromkaldi(dvector_file, 400) 
+vad_utt_label, vad_content = readvadfromkaldi(vad_file)
+
+# remove silence regions
+feat_vad, feat_time = gen_feat_vad(feat_content, vad_content)
+
+# initial segmentation
+scores, times, det_time, det_index = initial_seg(feat_vad, feat_time, 0.1, 0.01, 'dvec')
+
+# k-means clustering from initial segmentation
+change_point, segment_result, spk_model = spk_k_means_cluster(det_index, feat_vad, feat_time, 'svm')
+
+# transform index of features to time points
+det_time = [frame2time(feat_time[i], mfcc_shift) for i in change_point]
+cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
+
+# load change points labels and speaker labels
+ref_segment = gen_ref_seg('thu_ev_tag/F001HJN_F002VAN_001.txt')
+ref = read_ref('thu_ev_tag/F001HJN_F002VAN_001.txt')
+
+# evlaution
+init_e = seg_evlaution(det_time, ref_segment, 0.3)
+cluster_e = cluster_evluation(ref, cluster_result)
+print 'K-means clustering:'
+print init_e
+print cluster_e
+
+# resegmentation with speaker models
+spk_model = get_spk_model(feat_content, 'F001HJN_F002VAN_001')
+change_point, segment_result = spk_reseg_with_models(det_index, feat_vad, feat_time, spk_model)
+det_time = [frame2time(feat_time[i], mfcc_shift) for i in change_point]
+cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
+
+# evlaution
+init_e = seg_evlaution(det_time, ref_segment, 0.3)
+cluster_e = cluster_evluation(ref, cluster_result)
+print 'resegmentation with speaker models:'
+print init_e
+print cluster_e
+```
+
+- THU_EV_1062的实验结果
+
+不同容忍度下BIC分割和d-vector分割的DET曲线对比
+
+![det_curves](../result/thres_seg_3/far_mdr.png)
+
+聚类和重分割后错误率对比
+
+  method                                                       |  FAR |  MDR |  ACP | ASP
+---------------------------------------------------------------|------|------|------|------
+fixed threshold + EER (BIC)                                    |44.54%|49.59%|------|------
+fixed threshold + EER (D-vector)                               |34.79%|33.83%|------|------
+initial segmentation + k-means (D-vector)                      |32.85%|33.46%|68.44%|74.52%
+initial segmentation + speaker model re-segmentation (D-vector)|26.20%|26.57%|74.38%|80.68%
+
+## 参考文献
+
+> [1] Renyu Wang, Mingliang Gu, Lantian Li, Mingxing Xu, Thomas Fang Zheng, “Speaker Segmentation using Deep Speaker Vectors for Fast Speaker Change Scenarios,” International Conference on Acoustics, Speech and Signal Processing (ICASSP’17), pp. 5420-5424, Mar. 5-9, 2017, New Orleans, Louisiana, USA
+
+> [2] Li L, Wang D, Zhang Z, et al. Deep speaker vectors for semi text-independent speaker verification[J]. arXiv preprint arXiv:1505.06427, 2015.
