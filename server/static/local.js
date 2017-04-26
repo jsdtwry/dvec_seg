@@ -64,20 +64,10 @@ function WaveObj(divId, src) {
 	this.wave = wave;
 	this.onReady = function() {
 		var timeline = Object.create(WaveSurfer.Timeline);
-        var blind = Object.create(WaveSurfer.Timeline);
-        var onespk = Object.create(WaveSurfer.Timeline);
 		timeline.init({
 			wavesurfer:wave,
 			container:"#wave-timeline"
 		});
-        blind.init({
-            wavesurfer:wave,
-            container:"#blind"
-        });
-        onespk.init({
-            wavesurfer:wave,
-            container:"#onespk"
-        });
 	}
 	this.onError = function(err) {
 		console.error(err);
@@ -110,11 +100,126 @@ function WaveObj(divId, src) {
     	}
 }
 
+function WaveObj1(divId, src) {
+    var wave = Object.create(WaveSurfer);
+    var options = {
+        container:document.querySelector(divId),
+        waveColor:'violet',
+        progressColor:'purple',
+        cursorColor:'navy'
+    };
+
+    wave.init(options);
+    wave.load(src);
+
+    this.wave = wave;
+    this.onReady = function() {
+        var timeline1 = Object.create(WaveSurfer.Timeline);
+        timeline1.init({
+            wavesurfer:wave,
+            container:"#wave-timeline1"
+        });
+    }
+    this.onError = function(err) {
+        console.error(err);
+    }
+    this.onFinish = function(err) {
+        console.log('Finished');
+    }
+    this.onZoom = function() {
+        var val = Number(this.value);
+        var expVal = Math.pow(2,val);
+        
+        console.log('inside onZoom ' + val + ' exp ' + expVal);
+
+        wave.zoom(Math.pow(2,val));
+    }
+
+    wave.on('ready', this.onReady);
+    wave.on('error', this.onError);
+    wave.on('finish', this.onFinish);
+
+    wave.slider = document.getElementById('zoom');
+    //wave.slider.value = wave.params.minPxPerSec;
+    //wave.slider.min = wave.slider.value;
+    wave.slider.addEventListener('change', this.onZoom, false);
+
+        if (wave.enableDragSelection) {
+            wave.enableDragSelection({
+                    color: 'rgba(0, 255, 0, 0.1)'
+            });
+        }
+}
+
+function WaveObj2(divId, src) {
+    var wave = Object.create(WaveSurfer);
+    var options = {
+        container:document.querySelector(divId),
+        waveColor:'violet',
+        progressColor:'purple',
+        cursorColor:'navy'
+    };
+
+    wave.init(options);
+    wave.load(src);
+
+    this.wave = wave;
+    this.onReady = function() {
+        var timeline2 = Object.create(WaveSurfer.Timeline);
+        timeline2.init({
+            wavesurfer:wave,
+            container:"#wave-timeline2"
+        });
+    }
+    this.onError = function(err) {
+        console.error(err);
+    }
+    this.onFinish = function(err) {
+        console.log('Finished');
+    }
+    this.onZoom = function() {
+        var val = Number(this.value);
+        var expVal = Math.pow(2,val);
+        
+        console.log('inside onZoom ' + val + ' exp ' + expVal);
+
+        wave.zoom(Math.pow(2,val));
+    }
+
+    wave.on('ready', this.onReady);
+    wave.on('error', this.onError);
+    wave.on('finish', this.onFinish);
+
+    wave.slider = document.getElementById('zoom');
+    //wave.slider.value = wave.params.minPxPerSec;
+    //wave.slider.min = wave.slider.value;
+    wave.slider.addEventListener('change', this.onZoom, false);
+
+        if (wave.enableDragSelection) {
+            wave.enableDragSelection({
+                    color: 'rgba(0, 255, 0, 0.1)'
+            });
+        }
+}
+
 var waveObj;
+var waveObj1;
+var waveObj2;
 
 // Init & load audio file
 document.addEventListener('DOMContentLoaded', function () {
-	waveObj = new WaveObj('#waveform', 'static/demo/F001HJN_F002VAN_001.wav'); 
+	waveObj = new WaveObj('#waveform'); 
+	//waveObj = new WaveObj('#waveform', 'static/demo/F001HJN_F002VAN_001.wav'); 
+});
+// Init & load audio file
+document.addEventListener('DOMContentLoaded', function () {
+	waveObj1 = new WaveObj('#waveform1'); 
+    //waveObj1 = new WaveObj('#waveform1', 'static/demo/F001HJN_F002VAN_001.wav'); 
+});
+// Init & load audio file
+document.addEventListener('DOMContentLoaded', function () {
+	waveObj2 = new WaveObj('#waveform2'); 
+    //waveObj2 = new WaveObj('#waveform2', 'static/demo/F001HJN_F002VAN_001.wav'); 
 });
 
 function DumpObject(obj) {
@@ -133,6 +238,8 @@ function onFileSelect(evt) {
 	for (var i = 0; i < files.length; i++) {
 		var f = files[i];
 		waveObj.wave.loadBlob(f);
+        waveObj1.wave.loadBlob(f);
+        waveObj2.wave.loadBlob(f);
 		
 	}
 }
@@ -195,11 +302,6 @@ function dumpRegions() {
 		}
 	);
 	console.log('copy it');
-}	
-	
-
-function genRegion(){
-    
 }
 
 function onCut() {
@@ -305,15 +407,7 @@ function onSave(e) {
 }
 
 document.getElementById('wavefile').addEventListener('change', onFileSelect,false);
-document.getElementById('uploadbutton').addEventListener('click', onUpload,false);
-document.getElementById('downloadbutton').addEventListener('click', onDownload,false);
 document.getElementById('clearbutton').addEventListener('click', onClear,false);
-document.getElementById('savebutton').addEventListener('click', onSave,false);
 
-hookEvent('cutbutton', 'click', onCut);
 hookEvent('selbutton', 'click', onSel);
-hookEvent('copybutton', 'click', onCopy);
-hookEvent('pastebutton', 'click', onPaste);
 
-
-hookEvent('generate_region', 'click', genRegion)

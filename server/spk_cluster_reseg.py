@@ -11,18 +11,24 @@ def gen_block_representation(det_index, feat_vad, feat_time):
         block_rep.append(np.mean(feat_vad[start_index:i], axis=0))
         block_tag.append([start_index, i])
         start_index = i
+    #block_rep.append(np.mean(feat_vad[start_index:], axis=0))
+    #block_tag.append([start_index, len(feat_vad)])
+    #print start_index, len(feat_vad)
     return block_rep, block_tag
 
 '''
 speaker clustering using k-means, default K=2
 '''
 def spk_k_means_cluster(det_index, feat_vad, feat_time, type):
+    det_index.append(len(feat_vad))
+    #print det_index
     spk0_rep, spk1_rep = [], []
     cluster_change_point, cluster_result = [], []
     last_index = 0
     block_rep, block_tag = gen_block_representation(det_index, feat_vad, feat_time)
     y_pred = KMeans(n_clusters=2).fit_predict(block_rep)
     for i, k in enumerate(y_pred):
+        #print last_index, block_tag[i]
         if k==0:
             for j in range(block_tag[i][0], block_tag[i][1]):
                 spk0_rep.append(feat_vad[j])
@@ -35,6 +41,11 @@ def spk_k_means_cluster(det_index, feat_vad, feat_time, type):
             cluster_change_point.append(block_tag[i][0])
             cluster_result.append([[last_index, block_tag[i][0]], k])
             last_index = block_tag[i][0]
+    if k==0:
+        end = 1
+    else:
+        end = 0
+    cluster_result.append([[last_index, block_tag[i][1]-1], end])
     if type=='mean': 
         spk0_model = np.mean(spk0_rep, axis=0)
         spk1_model = np.mean(spk1_rep, axis=0)
@@ -100,6 +111,7 @@ def spk_reseg_with_models(det_index, feat_vad, feat_time, spk_model):
 
 '''speaker clustering and combineation with only one speaker model'''
 def spk_reseg_with_one_model(det_index, feat_vad, feat_time, spk_model):
+    det_index.append(len(feat_vad))
     spk0_rep, spk1_rep = [], []
     cluster_change_point, cluster_result = [], []
     last_index = 0
@@ -118,6 +130,12 @@ def spk_reseg_with_one_model(det_index, feat_vad, feat_time, spk_model):
             cluster_change_point.append(block_tag[i][0])
             cluster_result.append([[last_index, block_tag[i][0]], k])
             last_index = block_tag[i][0]
+    if k==0:
+        end = 1
+    else:
+        end = 0
+    cluster_result.append([[last_index, block_tag[i][1]-1], end])
+    
     spk0_model = np.mean(spk0_rep, axis=0)
     spk1_model = np.mean(spk1_rep, axis=0)
 
@@ -145,6 +163,11 @@ def spk_reseg_with_one_model(det_index, feat_vad, feat_time, spk_model):
             cluster_change_point.append(block_tag[i][0])
             cluster_result.append([[last_index, block_tag[i][0]], k])
             last_index = block_tag[i][0]
+    if k==0:
+        end = 1
+    else:
+        end = 0
+    cluster_result.append([[last_index, block_tag[i][1]-1], end])
     return cluster_change_point, cluster_result
 
 

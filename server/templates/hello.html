@@ -24,61 +24,80 @@ function onStop() {
     console.log('inside onStop');
     waveObj.wave.stop();
 }
+function onPlay1() {
+    console.log('inside onPlay');
+    waveObj1.wave.play();
+}
+function onStop1() {
+    console.log('inside onStop');
+    waveObj1.wave.stop();
+}
+function onPlay2() {
+    console.log('inside onPlay');
+    waveObj2.wave.play();
+}
+function onStop2() {
+    console.log('inside onStop');
+    waveObj2.wave.stop();
+}
+
 </script>
 </head>
 <body>
-hello
-
-<form action="{{ url_for('jump') }}", method=post>
-	<dt>username:
-	<dd><input type=text name=username>
-	<dt>password:
-	<dd><input type=password name=password>
-	<dd><input type=submit value=Login>
-</form>
-
-
+<h1>D-vector Speaker Segmentation Tools</h1>
+<h3>Original Speech Conversation</h3>
 <div class="container">
 <div class="demo">
     <div id="waveform"></div>
     <div id="wave-timeline"></div>
-    <div id="blind"></div>
-    <div id="onespk"></div>
 </div>
 </div>
-<button id="selbutton">Select</button>
-<button id="cutbutton">Cut</button>
-<button id="copybutton">Copy</button>
-<button id="pastebutton">Paste</button>
-<button id="clearbutton">Clear</button>
 <strong>|</strong>
 <button onclick="onPlay()">Play</button>
 <button onclick="onStop()">Stop</button>
 <strong>|</strong>
-<button id="uploadbutton">Upload</button>
-<button id="downloadbutton">Download</button>
-<button id="savebutton">Export</button>
-<a href="" download="demo.wav" id="saveanchor">Save</a>
-<progress min="0" max="100" value="0">0% complete</progress>
-<form id="seg_form" action="/upload_wav" method="post" enctype="multipart/form-data">
-<dt>start:
-<dd><input type=text id='start_p' name=start>
-<dt>end:
-<dd><input type=text id='end_p' name=end>
-<input type="file" name="fileupload" id="wavefile" value="open" text="open" >
-<input type="submit" value="seg" />
-</form>
+<button id="selbutton">Select One Speaker</button>
+<button id="clearbutton">Clear Selection</button>
+<strong>|</strong>
+
+<h3>D-vector segmntation & K-meams clustering</h3>
+<div class="container">
+<div class="demo">
+        <div id="waveform1"></div>
+        <div id="wave-timeline1"></div>
+</div>
+</div>
+<strong>|</strong>
+<button onclick="onPlay1()">Play</button>
+<button onclick="onStop1()">Stop</button>
+<strong>|</strong>
+
+<h3>D-vector segmentation & known one speaker model</h3>
+<div class="container">
+<div class="demo">
+        <div id="waveform2"></div>
+        <div id="wave-timeline2"></div>
+</div>
+</div>
+<strong>|</strong>
+<button onclick="onPlay2()">Play</button>
+<button onclick="onStop2()">Stop</button>
+<strong>|</strong>
 
 <hr>
 <div>
     Zoom
     <input type="range" id="zoom" min="4" max="16" value="4" step="1" style="width=100%"/>
 </div>
+<hr>
 
-start<input type="text" id="start" value"0.0">
-end<input type="text" id="end" value"0.0">
+<form id="seg_form" action="/upload_wav" method="post" enctype="multipart/form-data">
+<h3>Segment of model selection</h3>
+start: <input type=text id='start_p' name=start> end: <input type=text id='end_p' name=end><br>
+<input type="file" name="fileupload" id="wavefile" value="open" text="open" >
+</form>
+<button id="seg">Execute Segmentation</button><img id="loading" hidden="hidden" height="20" width="20" src="static/loading.gif" />
 
-<button id="seg">seg</button>
 <script type="text/javascript">
   $(function() {
     $('#seg').click(function() {
@@ -90,9 +109,34 @@ end<input type="text" id="end" value"0.0">
             dataType: 'json',
             processData:false,
             contentType:false,
+            beforeSend:function(){
+                $("#loading").show();
+            },
             success:function(data){
-                console.log(data.result);
+                $("#loading").hide();
+                //console.log(data.result);
                 $("#result").text(data.result);
+                var obj = eval(data.result[0])
+                //console.log(obj)
+                for(var key in obj){
+                    console.log(obj[key][0][0],obj[key][0][1],obj[key][1])
+                    if (obj[key][1]==1){
+                        waveObj1.wave.addRegion({color: 'rgba(0, 255, 0, 0.2)', start: obj[key][0][0], end: obj[key][0][1]});
+                    }else{
+                        waveObj1.wave.addRegion({color: 'rgba(0, 255, 255, 0.2)', start: obj[key][0][0], end: obj[key][0][1]});
+                    }
+                }
+
+                var obj = eval(data.result[1])
+                //console.log(obj)
+                for(var key in obj){
+                    console.log(obj[key][0][0],obj[key][0][1],obj[key][1])
+                    if (obj[key][1]==1){
+                        waveObj2.wave.addRegion({color: 'rgba(0, 255, 0, 0.2)', start: obj[key][0][0], end: obj[key][0][1]});
+                    }else{
+                        waveObj2.wave.addRegion({color: 'rgba(0, 255, 255, 0.2)', start: obj[key][0][0], end: obj[key][0][1]});
+                    }
+                }
             },
             error:function(e){
                     alert("没有取得数据");
@@ -102,34 +146,12 @@ end<input type="text" id="end" value"0.0">
   });
 </script>
 
-<p><input type=text size=5 name=a> +
-   <input type=text size=5 name=b> =
-   <span id=result>?</span>
-
-<p><button id="calculate">calculate server side</button>
-
-<script type=text/javascript>
-  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-</script>
-
-<script type=text/javascript>
-  $(function() {
-    $('#calculate').click(function() {
-      $.getJSON($SCRIPT_ROOT + '/_add_numbers', {
-        a: $('input[name="a"]').val(),
-        b: $('input[name="b"]').val()
-      }, function(data) {
-        $("#result").text(data.result);
-      });
-      return false;
-    });
-  });
-</script>
-
-
 <script src="static/local.js"></script>
 
-<button id="generate_region"> generate_region</button>
+<h3>说明</h3>
+1. 点击”选择文件“按钮加载语音文件(文件需要为wav格式，采样率为8k-16bit)<br>
+2. 加载成功后可以看见面板上出现语音波形，在Original Speech 部分播放试听，选择一个已知的说话人模型，点击"select one speaker"，让选择的起止时间点记录到下方start和end文本框中<br>
+3. 点击“Execute Segmentation”进行对话的说话人分割，分割处理会需要一段时间（与语音长度有关），请耐心等待！<br>
 
 </body>
 
