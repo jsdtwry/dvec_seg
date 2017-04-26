@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+<title>hello</title>
+
+<script src="static/src/wavesurfer.js"></script>
+<script src="static/src/util.js"></script>
+<script src="static/src/webaudio.js"></script>
+<script src="static/src/mediaelement.js"></script>
+<script src="static/src/drawer.js"></script>
+<script src="static/src/drawer.canvas.js"></script>
+<script src="static/src/audiosequence.js"></script>
+<script src="static/plugin/wavesurfer.timeline.js"></script>
+<script src="static/plugin/wavesurfer.regions.js"></script>
+<script src="static/src/jquery.js"></script>
+
+
+<script>
+function onPlay() {
+    console.log('inside onPlay');
+    waveObj.wave.play();
+}
+function onStop() {
+    console.log('inside onStop');
+    waveObj.wave.stop();
+}
+</script>
+</head>
+<body>
+hello
+
+<form action="{{ url_for('jump') }}", method=post>
+	<dt>username:
+	<dd><input type=text name=username>
+	<dt>password:
+	<dd><input type=password name=password>
+	<dd><input type=submit value=Login>
+</form>
+
+
+<div class="container">
+<div class="demo">
+    <div id="waveform"></div>
+    <div id="wave-timeline"></div>
+    <div id="blind"></div>
+    <div id="onespk"></div>
+</div>
+</div>
+<button id="selbutton">Select</button>
+<button id="cutbutton">Cut</button>
+<button id="copybutton">Copy</button>
+<button id="pastebutton">Paste</button>
+<button id="clearbutton">Clear</button>
+<strong>|</strong>
+<button onclick="onPlay()">Play</button>
+<button onclick="onStop()">Stop</button>
+<strong>|</strong>
+<button id="uploadbutton">Upload</button>
+<button id="downloadbutton">Download</button>
+<button id="savebutton">Export</button>
+<a href="" download="demo.wav" id="saveanchor">Save</a>
+<progress min="0" max="100" value="0">0% complete</progress>
+<form id="seg_form" action="/upload_wav" method="post" enctype="multipart/form-data">
+<dt>start:
+<dd><input type=text id='start_p' name=start>
+<dt>end:
+<dd><input type=text id='end_p' name=end>
+<input type="file" name="fileupload" id="wavefile" value="open" text="open" >
+<input type="submit" value="seg" />
+</form>
+
+<hr>
+<div>
+    Zoom
+    <input type="range" id="zoom" min="4" max="16" value="4" step="1" style="width=100%"/>
+</div>
+
+start<input type="text" id="start" value"0.0">
+end<input type="text" id="end" value"0.0">
+
+<button id="seg">seg</button>
+<script type="text/javascript">
+  $(function() {
+    $('#seg').click(function() {
+    var form= new FormData(document.getElementById("seg_form"));
+    $.ajax({
+            url:"/upload_wav",
+            type:"post",
+            data:form,
+            dataType: 'json',
+            processData:false,
+            contentType:false,
+            success:function(data){
+                console.log(data.result);
+                $("#result").text(data.result);
+            },
+            error:function(e){
+                    alert("没有取得数据");
+            }
+        })
+    });
+  });
+</script>
+
+<p><input type=text size=5 name=a> +
+   <input type=text size=5 name=b> =
+   <span id=result>?</span>
+
+<p><button id="calculate">calculate server side</button>
+
+<script type=text/javascript>
+  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+</script>
+
+<script type=text/javascript>
+  $(function() {
+    $('#calculate').click(function() {
+      $.getJSON($SCRIPT_ROOT + '/_add_numbers', {
+        a: $('input[name="a"]').val(),
+        b: $('input[name="b"]').val()
+      }, function(data) {
+        $("#result").text(data.result);
+      });
+      return false;
+    });
+  });
+</script>
+
+
+<script src="static/local.js"></script>
+
+<button id="generate_region"> generate_region</button>
+
+</body>
+
+</html>
+

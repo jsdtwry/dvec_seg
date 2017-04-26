@@ -3,14 +3,15 @@ from spk_cluster_reseg import *
 import sys
 import os
 
-wav_name = sys.argv[1]
-conf = sys.argv[2]
-nnet = sys.argv[3]
+#wav_name = sys.argv[1]
+#conf = sys.argv[2]
+#nnet = sys.argv[3]
 
 def feat_extract(wav_name, conf, nnet):
     utt_name = wav_name.split('/')[-1].split('.')[0]
     # mkdir
-    os.makedirs('feat/'+utt_name)
+    if not os.path.exists('feat/'+utt_name):
+        os.makedirs('feat/'+utt_name)
     # generate scp
     fout = file('feat/'+utt_name+'/wav.scp','w')
     fout.write(utt_name+' '+sys.path[0]+'/'+wav_name)
@@ -43,9 +44,9 @@ def dvec_seg(wav_name):
 
     # transform index of features to time points
     det_time = [frame2time(feat_time[i], mfcc_shift) for i in change_point]
-    cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
+    cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], int(i[1])] for i in segment_result]
     
-    print cluster_result
+    return cluster_result
   
 def dvec_seg_one_model(wav_name, start, end):
     utt_name = wav_name.split('/')[-1].split('.')[0]
@@ -71,12 +72,11 @@ def dvec_seg_one_model(wav_name, start, end):
     # transform index of features to time points
     det_time = [frame2time(feat_time[i], mfcc_shift) for i in change_point]
     cluster_result = [[[frame2time(feat_time[i[0][0]], mfcc_shift), frame2time(feat_time[i[0][1]], mfcc_shift)], i[1]] for i in segment_result]
-    
-    print cluster_result
-    
+    return cluster_result
 
 
 #feat_extract(wav_name, conf, nnet)
-dvec_seg(wav_name)
-dvec_seg_one_model(wav_name, 0.21, 1.50)
+#l = dvec_seg(wav_name)
+#print l
+#dvec_seg_one_model(wav_name, 0.21, 1.50)
 
