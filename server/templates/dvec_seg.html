@@ -13,6 +13,7 @@
 <script src="static/plugin/wavesurfer.timeline.js"></script>
 <script src="static/plugin/wavesurfer.regions.js"></script>
 <script src="static/src/jquery.js"></script>
+<script src="static/src/MediaStreamRecorder.js"></script>
 
 
 <script>
@@ -44,12 +45,83 @@ function onStop2() {
 </script>
 </head>
 <body>
-<h1>D-vector Speaker Segmentation Tools</h1>
-1. 点击”选择文件“按钮加载语音文件(文件需要为wav格式，采样率为8k-16bit)<br>
+<div style="float:left">
+<h1>CSLT Speaker Segmentation Tools</h1>
+1. 点击”选择文件“按钮加载语音文件(文件需要为wav格式),可以使用右边的录音工具进行录音并保存使用<br>
 2. 加载成功后可以看见面板上出现语音波形，在Original Speech 部分播放试听<br>
 3. 本说话人分割工具提供两种方法，分别点击每种方法下的“Execute Segmentation”按钮进行对话的说话人分割，分割处理会需要一段时间（与语音长度有关），请耐心等待！<br>
 4. 在Method2中，需要选择一个已知的说话人模型，点击"select one speaker"，让选择的起止时间点记录到下方start和end文本框中，之后再执行”Execute Segmentation“按钮进行分割<br>
+</div>
+<hr>
+<h3>Simple Recorder</h3>
+<button id="start">start</button>
+<button id="stop">stop</button>
+<button id="pause">pause</button>
+<button id="resume">resume</button>
+<button id="save">save</button>
+<script>
+var mediaRecorder;
+var mediaConstraints = {
+    audio: true
+};
 
+function onMediaSuccess(stream) {
+    mediaRecorder = new MediaStreamRecorder(stream);
+    mediaRecorder.recorderType = StereoAudioRecorder;
+    mediaRecorder.mimeType = 'audio/wav';
+    //mediaRecorder.sampleRate = 22050;
+    mediaRecorder.audioChannels = 1;
+    mediaRecorder.start(120000);
+}
+
+function onMediaError(e) {
+    console.error('media error', e);
+}
+
+$(function(){
+	$('#start').click(function(){
+		console.log('start')
+		//navigator.mediaDevices.getUserMedia(mediaConstraints).then(onMediaSuccess).catch(onMediaError);
+		navigator.getUserMedia(mediaConstraints, onMediaSuccess, onMediaError);
+
+	});
+});
+$(function(){
+	$('#stop').click(function(){
+		console.log('stop')
+		mediaRecorder.stop();
+        //$('#pause').disabled = true;
+        //$('#start').disabled = false;
+        
+	});
+});
+$(function(){
+	$('#pause').click(function(){
+		console.log('pause')
+		mediaRecorder.pause();
+        //$('#resume').disabled = false;
+	});
+});
+$(function(){
+	$('#resume').click(function(){
+		console.log('resume')
+		mediaRecorder.resume();
+        //$('#pause').disabled = false;
+	});
+});
+$(function(){
+	$('#save').click(function(){
+		console.log('save')
+		mediaRecorder.save();
+	});
+});
+
+</script>
+
+<hr>
+
+<div style="clear:both">
+<hr>
 <h3>Original Speech Conversation</h3>
 <div class="container">
 <div class="demo">
@@ -77,6 +149,7 @@ start (s): <input type=text id='start_p' name=start value=0.0000> end (s): <inpu
 <!--
 <button id="seg">Execute Segmentation</button><img id="loading" hidden="hidden" height="20" width="20" src="static/loading.gif" />
 -->
+<hr>
 <h3>Method1: D-vector segmntation & K-meams clustering</h3>
 <div class="container">
 <div class="demo">
@@ -91,6 +164,8 @@ start (s): <input type=text id='start_p' name=start value=0.0000> end (s): <inpu
 <strong>|</strong>
 <button id="seg1">Execute Segmentation</button><img id="loading1" hidden="hidden" height="20" width="20" src="static/loading.gif" />
 <strong>|</strong>
+<a id="download1" hidden="hidden" href='static/t1.txt' download>download_result</a>
+<hr>
 
 <h3>Method2: D-vector segmentation & known one speaker model</h3>
 <div class="container">
@@ -106,10 +181,12 @@ start (s): <input type=text id='start_p' name=start value=0.0000> end (s): <inpu
 <strong>|</strong>
 <button id="seg2">Execute Segmentation</button><img id="loading2" hidden="hidden" height="20" width="20" src="static/loading.gif" />
 <strong>|</strong>
-
+<a id="download2" hidden="hidden" href='static/t2.txt' download>download_result</a>
+</div>
 <hr>
+Designed By CSLT<br>
+@Copyright:Tsinghua University Research Institute of Information Technology Speech and Language Technologies R&D Center
 <hr>
-
 <script type="text/javascript">
   $(function() {
     $('#seg').click(function() {
@@ -173,6 +250,7 @@ start (s): <input type=text id='start_p' name=start value=0.0000> end (s): <inpu
             },
             success:function(data){
                 $("#loading1").hide();
+                $("#download1").show();
                 //console.log(data.result);
                 $("#result").text(data.result);
                 var obj = eval(data.result)
@@ -209,6 +287,7 @@ start (s): <input type=text id='start_p' name=start value=0.0000> end (s): <inpu
             },
             success:function(data){
                 $("#loading2").hide();
+                $("#download2").show();
                 //console.log(data.result);
                 $("#result").text(data.result);
                 var obj = eval(data.result)

@@ -7,6 +7,10 @@ import os
 #conf = sys.argv[2]
 #nnet = sys.argv[3]
 
+def sample_rate(old_name, new_name):
+    os.system('sox '+old_name+' -r 8000 '+new_name)
+    return
+
 def feat_extract(wav_name, conf, nnet):
     utt_name = wav_name.split('/')[-1].split('.')[0]
     # mkdir
