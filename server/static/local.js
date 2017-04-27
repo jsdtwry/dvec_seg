@@ -91,7 +91,7 @@ function WaveObj(divId, src) {
 	wave.slider = document.getElementById('zoom');
 	//wave.slider.value = wave.params.minPxPerSec;
 	//wave.slider.min = wave.slider.value;
-	wave.slider.addEventListener('change', this.onZoom, false);
+	//wave.slider.addEventListener('change', this.onZoom, false);
 
     	if (wave.enableDragSelection) {
         	wave.enableDragSelection({
@@ -142,7 +142,7 @@ function WaveObj1(divId, src) {
     wave.slider = document.getElementById('zoom');
     //wave.slider.value = wave.params.minPxPerSec;
     //wave.slider.min = wave.slider.value;
-    wave.slider.addEventListener('change', this.onZoom, false);
+    //wave.slider.addEventListener('change', this.onZoom, false);
 
         if (wave.enableDragSelection) {
             wave.enableDragSelection({
@@ -193,7 +193,7 @@ function WaveObj2(divId, src) {
     wave.slider = document.getElementById('zoom');
     //wave.slider.value = wave.params.minPxPerSec;
     //wave.slider.min = wave.slider.value;
-    wave.slider.addEventListener('change', this.onZoom, false);
+    //wave.slider.addEventListener('change', this.onZoom, false);
 
         if (wave.enableDragSelection) {
             wave.enableDragSelection({
@@ -377,8 +377,8 @@ function onSel() {
 
     //console.log(start)
     //console.log(end)
-    document.getElementById("start_p").value=start;
-    document.getElementById("end_p").value=end;
+    document.getElementById("start_p").value=start.toFixed(4);
+    document.getElementById("end_p").value=end.toFixed(4);
     //start = ~~(start * buf.sampleRate)
     //end = ~~(end * buf.sampleRate);
 }
@@ -395,6 +395,14 @@ function onClear() {
 	waveObj.wave.clearRegions();
 }
 
+function onClear1() {
+	waveObj1.wave.clearRegions();
+}
+
+function onClear2() {
+	waveObj2.wave.clearRegions();
+}
+
 function hookEvent(id,evt,callback) {
 	document.getElementById(id).addEventListener(evt,callback,false);
 }
@@ -408,6 +416,8 @@ function onSave(e) {
 
 document.getElementById('wavefile').addEventListener('change', onFileSelect,false);
 document.getElementById('clearbutton').addEventListener('click', onClear,false);
+document.getElementById('clearbutton1').addEventListener('click', onClear1,false);
+document.getElementById('clearbutton2').addEventListener('click', onClear2,false);
 
 hookEvent('selbutton', 'click', onSel);
 
